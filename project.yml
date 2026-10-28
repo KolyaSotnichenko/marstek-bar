@@ -1,0 +1,64 @@
+name: MarstekBar
+options:
+  deploymentTarget:
+    macOS: "14.0"
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+packages:
+  MarstekKit:
+    path: MarstekKit
+settings:
+  base:
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  MarstekBar:
+    type: application
+    platform: macOS
+    sources: [App, Shared]
+    dependencies:
+      - package: MarstekKit
+      - target: MarstekWidget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: MarstekBar
+        LSUIElement: true
+        NSLocalNetworkUsageDescription: MarstekBar reads your Marstek battery's status on your home network.
+        AppGroupID: $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).marstek
+    entitlements:
+      path: App/MarstekBar.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.network.server: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).marstek
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).MarstekBar
+  MarstekWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Widget, Shared]
+    dependencies:
+      - package: MarstekKit
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Marstek
+        AppGroupID: $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).marstek
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/MarstekWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)$(BUNDLE_ID_PREFIX).marstek
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).MarstekBar.Widget

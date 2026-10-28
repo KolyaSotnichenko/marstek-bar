@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read-only guard
+        run: |
+          if grep -rnE "ES\.SetMode|DOD\.SET|Led\.Ctrl|Ble\.Adv|Set\.Ver|Reset\.Factory" MarstekKit/Sources App Widget Shared scripts; then
+            echo "::error::Write commands are not allowed in MarstekBar"; exit 1
+          fi
+      - name: Test MarstekKit
+        run: cd MarstekKit && swift test
+      - name: Build app (unsigned)
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -project MarstekBar.xcodeproj -scheme MarstekBar -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO build

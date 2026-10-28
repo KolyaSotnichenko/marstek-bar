@@ -1,0 +1,28 @@
+name: Bug report
+description: Something doesn't work or shows wrong values
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Battery model and firmware
+      description: e.g. Venus E 3.0, firmware 150 (`swift run marstek-cli` prints it)
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: probe
+    attributes:
+      label: Probe output (optional)
+      description: Output of `python3 scripts/probe.py --ip <battery-ip> --minutes 3`
+      render: text

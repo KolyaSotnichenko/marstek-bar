@@ -1,0 +1,11 @@
+__pycache__/
+.build/
+.DS_Store
+.superpowers/
+.swiftpm/
+*.xcodeproj
+build/
+Config/Local.xcconfig
+DerivedData/
+docs/superpowers/
+xcuserdata/
