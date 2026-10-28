@@ -105,7 +105,7 @@ public actor Poller {
         }
     }
 
-    private func exclusive<T>(_ body: () async -> T) async -> T {
+    private func exclusive<T: Sendable>(_ body: () async -> T) async -> T {
         while busy { await withCheckedContinuation { waiters.append($0) } }
         busy = true
         defer {
