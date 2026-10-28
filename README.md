@@ -10,6 +10,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/KolyaSotnichenko/marstek-bar/actions/workflows/ci.yml"><img src="https://github.com/KolyaSotnichenko/marstek-bar/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
+</p>
+
+<p align="center">
   <img src="docs/images/widget.png" width="350" alt="MarstekBar desktop widget">
 </p>
 
