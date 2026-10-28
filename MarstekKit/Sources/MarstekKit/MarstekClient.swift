@@ -14,12 +14,17 @@ public actor MarstekClient {
     private let minSpacing: Duration
     private let timeout: Duration
     private let attempts: Int
-    private var nextID = 1
+    /// The device ignores ids above 16 bits. A random start keeps a host on the LAN
+    /// from guessing which id the next reply needs.
+    static let maxID = 65535
+    private var nextID: Int
     private var lastSend: ContinuousClock.Instant?
 
     public init(host: String, port: UInt16 = 30000, transport: DatagramTransport,
-                minSpacing: Duration = .seconds(1.5), timeout: Duration = .seconds(3), attempts: Int = 3) {
+                minSpacing: Duration = .seconds(1.5), timeout: Duration = .seconds(3), attempts: Int = 3,
+                firstID: Int? = nil) {
         self.host = host
+        nextID = firstID ?? Int.random(in: 1...Self.maxID)
         self.port = port
         self.transport = transport
         self.minSpacing = minSpacing
@@ -34,7 +39,7 @@ public actor MarstekClient {
         for _ in 0..<attempts {
             if let lastSend { try await Task.sleep(until: lastSend + minSpacing) }
             let id = nextID
-            nextID += 1
+            nextID = id >= Self.maxID ? 1 : id + 1
             issued.insert(id)
             try await transport.send(RPC.request(id: id, method: method, params: ["id": 0]), host: host, port: port)
             // Stamped once the datagram is out, so spacing counts from the actual send.
@@ -51,7 +56,8 @@ public actor MarstekClient {
         while true {
             let remaining = deadline - .now
             guard remaining > .zero, let datagram = try await transport.receive(timeout: remaining) else { return nil }
-            guard let id = RPC.peekID(datagram.data), ids.contains(id) else { continue }
+            // Only the battery may answer; anyone else on the network could forge a reply.
+            guard datagram.host == host, let id = RPC.peekID(datagram.data), ids.contains(id) else { continue }
             do {
                 if let result = try RPC.decode(datagram.data, as: type).result { return result }
             } catch let error as RPCError {

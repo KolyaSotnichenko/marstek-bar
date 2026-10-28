@@ -120,7 +120,7 @@ scripts/      probe.py (read-only device probe), make-icon.swift (renders the ap
 ## Development
 
 ```sh
-cd MarstekKit && swift test            # 78 tests, no Xcode project needed
+cd MarstekKit && swift test            # 81 tests, no Xcode project needed
 swift run marstek-cli --watch          # poll your battery from the terminal
 python3 scripts/probe.py --ip 192.168.1.50 --minutes 2   # raw CSV of what the battery reports
 swift scripts/make-icon.swift          # re-render the app icon

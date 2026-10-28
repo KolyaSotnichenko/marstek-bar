@@ -11,17 +11,22 @@ actor FakeTransport: DatagramTransport {
     private var responder: Responder
     private(set) var sent: [Sent] = []
     private var inbox: [(data: Data, host: String)] = []
+    /// When set, replies arrive from this address instead of the one sent to.
+    private var replyHost: String?
 
     init(responder: @escaping Responder) { self.responder = responder }
 
     func setResponder(_ responder: @escaping Responder) { self.responder = responder }
+    func setReplyHost(_ host: String?) { replyHost = host }
 
     func send(_ data: Data, host: String, port: UInt16) async throws {
         let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
         let id = obj["id"] as? Int ?? -1
         let method = obj["method"] as? String ?? ""
         sent.append(Sent(id: id, method: method, host: host, at: .now))
-        for reply in responder(id, method, host) { inbox.append((reply, Self.sender(of: reply, sentTo: host))) }
+        for reply in responder(id, method, host) {
+            inbox.append((reply, replyHost ?? Self.sender(of: reply, sentTo: host)))
+        }
     }
 
     /// A broadcast is answered from each device's own address, which a device

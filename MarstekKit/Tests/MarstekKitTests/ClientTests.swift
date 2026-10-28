@@ -52,6 +52,38 @@ import Testing
         #expect(bat.soc == 64)
     }
 
+    @Test func ignoresReplyFromAnotherHost() async throws {
+        // Every id gets a correct-looking answer, but from somewhere other than the battery.
+        let transport = FakeTransport { id, _, _ in [reply(id: id, #"{"soc":1}"#)] }
+        await transport.setReplyHost("192.168.1.66")
+        await #expect(throws: ClientError.noResponse(method: "Bat.GetStatus")) {
+            try await client(transport).call("Bat.GetStatus", as: BatStatus.self)
+        }
+    }
+
+    @Test func requestIDsAreNotPredictable() async throws {
+        let a = FakeTransport { id, _, _ in [reply(id: id, batResult)] }
+        let b = FakeTransport { id, _, _ in [reply(id: id, batResult)] }
+        _ = try await client(a).call("Bat.GetStatus", as: BatStatus.self)
+        _ = try await client(b).call("Bat.GetStatus", as: BatStatus.self)
+        let first = await a.sent.first?.id, second = await b.sent.first?.id
+        #expect(first != 1 || second != 1)
+        #expect(first != second)
+    }
+
+    /// The device answers only ids that fit in 16 bits (checked live on a Venus E 3.0).
+    @Test func requestIDsStayWithin16Bits() async throws {
+        let transport = FakeTransport { id, _, _ in [reply(id: id, batResult)] }
+        let c = MarstekClient(host: "192.168.1.50", transport: transport, minSpacing: .zero,
+                              timeout: .milliseconds(50), firstID: 65535)
+        _ = try await c.call("Bat.GetStatus", as: BatStatus.self)
+        _ = try await c.call("Bat.GetStatus", as: BatStatus.self)
+        #expect(await transport.sent.map(\.id) == [65535, 1])
+        let fresh = FakeTransport { id, _, _ in [reply(id: id, batResult)] }
+        _ = try await client(fresh).call("Bat.GetStatus", as: BatStatus.self)
+        #expect((1...65535).contains(await fresh.sent.first?.id ?? 0))
+    }
+
     @Test func doesNotRetryDeviceError() async throws {
         let transport = FakeTransport { id, _, _ in
             [Data(#"{"id":\#(id),"error":{"code":-32601,"message":"Method not found"}}"#.utf8)]
